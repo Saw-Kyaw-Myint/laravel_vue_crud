@@ -31,20 +31,21 @@ class PostController extends Controller
         }
     }
 
-    public  function update(Request $request, $id)
+    public  function update(Request $request,$id)
     {
         $post = Post::find($id);
-        if ($post) {
-            $post->update([
-                'title' => $request->title,
-            ]);
-
+        $post->title=$request->title;
+        if ($request->file()) {
+            $file_name = time() . '_' . $request->file->getClientOriginalName();
+            $file_path = $request->file('file')->storeAs('uploads', $file_name, 'public');
+            $post->image_path = '/storage/' . $file_path;
+        }
+        $post->update();
             return response()->json([
                 'success' => true,
                 'message' => 'Post updated',
                 'data' => $post
             ], 200);
-        }
     }
 
     public function deletePost($id)
