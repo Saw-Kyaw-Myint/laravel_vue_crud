@@ -11,7 +11,6 @@
 <body>
     <div id="app">
         <main class="py-4">
-           <example-component></example-component>
            <post-component></post-component>
         </main>
     </div>
