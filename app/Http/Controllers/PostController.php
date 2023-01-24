@@ -13,21 +13,23 @@ class PostController extends Controller
 
         return response()->json($posts);
     }
-    public function createPost(Request $request)
+    public function create(Request $request)
     {
         $request->validate([
             'title'=>'required',
             'file' => 'required|mimes:jpg,jpeg,png,csv,txt,xlx,xls,pdf|max:2048'
         ]);
         
-        $post = new Post();
-        $post->title = $request->title;
-
+        $posts= new Post();
         if ($request->file()) {
             $file_name = time() . '_' . $request->file->getClientOriginalName();
             $file_path = $request->file('file')->storeAs('uploads', $file_name, 'public');
-            $post->image_path = '/storage/' . $file_path;
-            $post->save();
+            $image_path = '/storage/' . $file_path;
+            $data=[
+                'title'=>$request->title,
+                'image_path'=>$image_path
+            ];       
+            $posts->create($data);
 
             return response()->json([
                 'message' => 'New post created'
@@ -37,20 +39,21 @@ class PostController extends Controller
 
     public  function update(Request $request,$id)
     {
-        info($request);
-
         $request->validate([
             'title'=>'required',
             'file' => 'required|mimes:jpg,jpeg,png,csv,txt,xlx,xls,pdf|max:2048'
         ]);
         
        $post = Post::find($id);
-        $post->title = $request->title;
-        if ($request->file()) {
+      $post->title = $request->title;  if ($request->file()) {
             $file_name = time() . '_' . $request->file->getClientOriginalName();
             $file_path = $request->file('file')->storeAs('uploads', $file_name, 'public');
-            $post->image_path = '/storage/' . $file_path;
-            $post->update();
+            $image_path = '/storage/' . $file_path;
+           $data=[
+         'title'=>$request->title,
+         'image_path'=>$image_path
+           ]; 
+           $post->update($data);
 
             return response()->json([
                 'message' => 'New post updated'
@@ -58,11 +61,12 @@ class PostController extends Controller
         }
     }
 
-    public function deletePost($id)
+    public function destroy($id)
     {
+        info($id);
         $post = Post::find($id);
         $post->delete();
-        
+
         return response()->json(['message' => 'post id deleted']);
     }
 }

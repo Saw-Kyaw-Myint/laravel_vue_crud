@@ -1,14 +1,17 @@
 <template>
+  <div class="whole">
+    <div class="">
   <button @click="toggleCreate()" id="create">Create</button>
   <div class="post-form" v-if="create">
+    <span class="crop" @click="create=false">x</span>
     <p class="title">Post create</p>
-    <form @submit="addNewPost" enctype="multipart/form-data"  @blur="create=false">
+    <form @submit.prevent="addNewPost" enctype="multipart/form-data"  @blur="create=false">
       <label for="">Title</label> <br>
       <input type="text" name="title" v-model="newPost" placeholder="title" /><br>
-      <span class="error">{{ errorTitle }}</span> <br>
+      <span class="error">{{ errors.errorTitle }}</span> <br>
       <label for="">Image</label><br>
       <input type="file" v-on:change="onChange" /><br>
-      <sapn class="error">{{ errorFile }}</sapn>  <br>
+      <sapn class="error">{{ errors.errorFile }}</sapn>  <br>
       <button type="submit">create</button>
     </form>
   </div>
@@ -33,14 +36,15 @@
           <button @click="toggleEdit(post.id)" id="edit">edit</button>
           <button id="delete" @click="deletePost(post.id)">delete</button>
           <div class="update-form" v-if="edit">
+            <span class="crop"  @click="edit=crop">x</span>
             <p class="title">Post edit</p>
             <form @submit.prevent="updatePost(post.id, post.title)" enctype="multipart/form-data">
               <label for="">title</label>
               <input type="text" name="title" v-model="post.title" /> <br>
-              <span class="error">{{ errorTitle }}</span> <br>
+              <span class="error">{{ errors.errorTitle }}</span> <br>
               <label for="">image</label>
               <input type="file" v-on:change="onChange" /> <br>
-               <span class="error">{{ errorFile }}</span> <br>
+               <span class="error">{{ errors.errorTitle }}</span> <br>
               <button type="submit">submit</button>
             </form>
           </div>
@@ -48,20 +52,21 @@
       </tr>
     </tbody>
   </table>
+    </div>
+</div>
 </template>
-<script>
-import { ref, onMounted } from "vue";
-
-export default {
-  setup() {
+<script setup>
+import { ref,onMounted,reactive} from "vue";
     const newPost = ref("");
     const posts = ref([]);
     const file = ref("");
     const updateFile = ref("");
     const edit = ref(false);
     const create = ref(false);
-    const errorTitle = ref('');
-    const errorFile = ref('');
+    const errors = reactive({
+            errorTitle: '',
+            errorFile: ''
+        })
 
     onMounted(() => {
       getPost();
@@ -69,6 +74,8 @@ export default {
 
     function toggleEdit() {
       edit.value = !edit.value;
+      errors.errorTitle='';
+      errors.errorFile='';
     }
 
     function toggleCreate() {
@@ -78,15 +85,8 @@ export default {
       file.value = e.target.files[0];
     };
 
-    const updateChange = (e) => {
-      updateFile.value = e.target.files[0];
-    };
-
-
     // post methods
     function addNewPost(e) {
-      // let existingObj = this;
-      // e.preventDefault();
       const config = {
         headers: {
           "content-type": "multipart/form-data",
@@ -98,7 +98,7 @@ export default {
 
 
       axios
-        .post("/post", data, config)
+        .post("api/post", data, config)
         .then((response) => {
           alert(response.data.message);
           newPost.value = "";
@@ -106,15 +106,15 @@ export default {
           create.value=false;
         })
         .catch(function (error) {
-          errorTitle.value = error.response.data.errors.title[0];
-          errorFile.value = error.response.data.errors.file[0];
+          errors.errorTitle = error.response.data.errors.title[0];
+          errors.errorFile = error.response.data.errors.file[0];
         });
     }
 
     //get methods
     function getPost() {
       axios
-        .get("/post")
+        .get("api/post")
         .then((response) => {
           posts.value = response.data;
         })
@@ -136,7 +136,7 @@ export default {
       data.append("title", updateText);
       console.log(data.title);
       axios
-        .post(`/post/update/${id}`, data, config)
+        .post(`api/post/update/${id}`, data, config)
         .then((response) => {
           alert(response.data.message);
           newPost.value = "";
@@ -144,41 +144,22 @@ export default {
           getPost();
         })
         .catch(function (error) {
-          errorTitle.value = error.response.data.errors.title[0];
-          errorFile.value = error.response.data.errors.file[0];
+         errors.errorTitle = error.response.data.errors.title[0];
+        errors.errorTitle = error.response.data.errors.file[0];
         });
     }
 
 
     //delete Post
     function deletePost(id) {
-      axios.delete(`/post/${id}`).then((response) => {
+      axios.delete(`api/post/${id}`).then((response) => {
         confirm("are you sure to delete");
         getPost();
       });
     }
 
-    return {
-      newPost,
-      toggleEdit,
-      updatePost,
-      errorFile,
-      errorTitle,
-      updateFile,
-      updateChange,
-      onChange,
-      create,
-      toggleCreate,
-      edit,
-      posts,
-      deletePost,
-      getPost,
-      addNewPost,
-    };
-  },
-};
 </script>
-<style >
+<style  scoped>
 .image {
   width: 100px;
   height: 100px;
@@ -186,6 +167,11 @@ export default {
 .title{
   font-size: 20px;
   text-align: center;
+}
+.whole{
+width: 1000px;
+margin-top: 200px !important;
+margin: 0 auto;
 }
 #create {
   border: none;
@@ -215,7 +201,15 @@ export default {
   border-radius: 10px;
   padding: 10px;
 }
-
+.crop{
+  padding: 3px 8px;
+    border-radius: 50%;
+    background-color: #e30f0f;
+    color: #fff;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
 .post-form {
   padding: 20px;
   position: absolute;
